@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xếp Hạng</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    .class-info {
+      margin: 10px 0;
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Xếp Hạng</h1>
+
+    <div id="class-rankings"></div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      var classScores = [
+        { class: "11A1", averageScore: localStorage.getItem("averageScoreWeek11133") },
+        { class: "11A2", averageScore: localStorage.getItem("averageScoreWeek11233") },
+        { class: "11A3", averageScore: localStorage.getItem("averageScoreWeek11333") },
+        { class: "10C1", averageScore: localStorage.getItem("averageScoreWeek10133") },
+        { class: "10C2", averageScore: localStorage.getItem("averageScoreWeek10233") },
+        { class: "10C3", averageScore: localStorage.getItem("averageScoreWeek10333") },
+        { class: "12B1", averageScore: localStorage.getItem("averageScoreWeek12133") },
+        { class: "12b2", averageScore: localStorage.getItem("averageScoreWeek12233") },
+        { class: "12B3", averageScore: localStorage.getItem("averageScoreWeek12333") }
+      ];
+
+      classScores.sort(function(a, b) {
+        return b.averageScore - a.averageScore;
+      });
+
+      var previousScore = null;
+      var previousRank = 0;
+
+      var classRankingsContainer = document.getElementById("class-rankings");
+
+      for (var i = 0; i < classScores.length; i++) {
+        var classInfo = classScores[i];
+        var rank = i + 1;
+        if (classInfo.averageScore !== previousScore) {
+          previousRank = rank;
+        }
+        var classRankingElement = document.createElement("div");
+        classRankingElement.classList.add("class-info");
+        var message = classInfo.class + " - " + classInfo.averageScore + " - Thứ hạng: " + previousRank;
+        classRankingElement.textContent = message;
+        classRankingsContainer.appendChild(classRankingElement);
+        previousScore = classInfo.averageScore;
+      }
+    });
+  </script>
+</body>
+</html>

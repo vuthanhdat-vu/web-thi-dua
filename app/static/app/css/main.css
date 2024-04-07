@@ -1,0 +1,4 @@
+.custom-scroll {
+    max-height: 300px; /* Điều này làm giảm chiều cao của danh sách để tạo ra thanh cuộn khi nó vượt quá kích thước */
+    overflow-y: auto; /* Tạo ra thanh cuộn theo chiều dọc */
+}

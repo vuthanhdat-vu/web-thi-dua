@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trang Hiển Thị Điểm Trung Bình</title>
+  <style>
+    /* Thiết lập kiểu cho bảng */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    /* Thiết lập kiểu cho cột */
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    /* Tạo màu nền cho hàng chẵn */
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+
+    /* Style cho phần ghi chú */
+    #notes {
+      margin-top: 20px;
+    }
+
+    #notes textarea {
+      width: 100%;
+      height: 100px;
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+  <div id="dataContainer"></div>
+  <h1>Ghi chú</h1>
+<textarea id="noteInput" placeholder="Nhập nội dung ghi chú"></textarea>
+<button onclick="saveNote()">Lưu ghi chú</button>
+
+<h2>Ghi chú đã lưu</h2>
+<div id="savedNotes"></div>
+  <script>
+    // Hàm để tạo và hiển thị 35 bảng
+    function createTable(week) {
+      var tableHTML = `
+        <!-- Tạo bảng với 8 dòng (1 dòng thêm để tính điểm trung bình)-->
+        <table>
+          <caption>Tuần 23-B1</caption>
+          <thead>
+            <tr>
+              <th>Thứ</th>
+              <th>Vắng không phép</th>
+              <th>Đi học muộn</th>
+              <th>Không đeo thẻ</th>
+              <th>Sai đồng phục</th>
+              <th>Vi phạm kỉ luật</th>
+              <th>Điểm</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      for (var day = 2; day <= 7; day++) {
+        tableHTML += `
+          <!-- Dòng ${day} -->
+          <tr>
+            <td>Thứ ${day}</td>
+            <td><input type="number" id="absent${week}_${day}" oninput="calculateScore(${week}, ${day})"></td>
+            <td><input type="number" id="late${week}_${day}" oninput="calculateScore(${week}, ${day})"></td>
+            <td><input type="number" id="noBadge${week}_${day}" oninput="calculateScore(${week}, ${day})"></td>
+            <td><input type="number" id="uniformViolation${week}_${day}" oninput="calculateScore(${week}, ${day})"></td>
+            <td><input type="number" id="disciplinaryViolation${week}_${day}" oninput="calculateScore(${week}, ${day})"></td>
+            <td id="score${week}_${day}">100</td>
+          </tr>
+        `;
+      }
+
+      tableHTML += `
+          <!-- Dòng 8 (Dòng để tính điểm trung bình) -->
+          <tr>
+            <td>Trung bình</td>
+            <td id="averageAbsent${week}"></td>
+            <td id="averageLate${week}"></td>
+            <td id="averageNoBadge${week}"></td>
+            <td id="averageUniformViolation${week}"></td>
+            <td id="averageDisciplinaryViolation${week}"></td>
+            <td id="averageScore${week}">100</td>
+          </tr>
+          </tbody>
+        </table>
+      `;
+
+      // Thêm mã HTML vào div có id là "dataContainer"
+      document.getElementById("dataContainer").innerHTML += tableHTML;
+
+      // Gọi hàm để khôi phục dữ liệu từ Local Storage khi trang được tải lại
+      restoreFromLocalStorage(week);
+
+    }
+
+    // Hàm để tính điểm cho một ngày cụ thể của một tuần cụ thể
+    function calculateScore(week, day) {
+      var absent = parseInt(document.getElementById("absent" + week + "_" + day).value) || 0;
+      var late = parseInt(document.getElementById("late" + week + "_" + day).value) || 0;
+      var noBadge = parseInt(document.getElementById("noBadge" + week + "_" + day).value) || 0;
+      var uniformViolation = parseInt(document.getElementById("uniformViolation" + week + "_" + day).value) || 0;
+      var disciplinaryViolation = parseInt(document.getElementById("disciplinaryViolation" + week + "_" + day).value) || 0;
+
+      var score = 100 - absent - (2*late) - noBadge - uniformViolation - (2*disciplinaryViolation);
+
+      document.getElementById("score" + week + "_" + day).textContent = score;
+
+      // Gọi hàm để tính điểm trung bình
+      calculateAverage(week);
+      // Lưu trạng thái vào Local Storage
+      saveToLocalStorage(week, day);
+    }
+
+    // Hàm để tính điểm trung bình cho một tuần cụ thể
+    function calculateAverage(week) {
+      var totalAbsent = 0;
+      var totalLate = 0;
+      var totalNoBadge = 0;
+      var totalUniformViolation = 0;
+      var totalDisciplinaryViolation = 0;
+      var totalCount = 0;
+
+      for (var day = 2; day <= 7; day++) {
+        var absent = parseInt(document.getElementById("absent" + week + "_" + day).value) || 0;
+        var late = parseInt(document.getElementById("late" + week + "_" + day).value) || 0;
+        var noBadge = parseInt(document.getElementById("noBadge" + week + "_" + day).value) || 0;
+        var uniformViolation = parseInt(document.getElementById("uniformViolation" + week + "_" + day).value) || 0;
+        var disciplinaryViolation = parseInt(document.getElementById("disciplinaryViolation" + week + "_" + day).value) || 0;
+
+        totalAbsent += absent;
+        totalLate += late;
+        totalNoBadge += noBadge;
+        totalUniformViolation += uniformViolation;
+        totalDisciplinaryViolation += disciplinaryViolation;
+
+        totalCount += 1;
+      }
+
+      var averageAbsent = totalAbsent / totalCount;
+      var averageLate = totalLate / totalCount;
+      var averageNoBadge = totalNoBadge / totalCount;
+      var averageUniformViolation = totalUniformViolation / totalCount;
+      var averageDisciplinaryViolation = totalDisciplinaryViolation / totalCount;
+
+      var averageScore = 100 - averageAbsent - averageLate - averageNoBadge - averageUniformViolation - averageDisciplinaryViolation;
+
+      document.getElementById("averageAbsent" + week).textContent = averageAbsent.toFixed(2);
+      document.getElementById("averageLate" + week).textContent = averageLate.toFixed(2);
+      document.getElementById("averageNoBadge" + week).textContent = averageNoBadge.toFixed(2);
+      document.getElementById("averageUniformViolation" + week).textContent = averageUniformViolation.toFixed(2);
+      document.getElementById("averageDisciplinaryViolation" + week).textContent = averageDisciplinaryViolation.toFixed(2);
+      document.getElementById("averageScore" + week).textContent = averageScore.toFixed(2);
+      localStorage.setItem("averageScoreWeek" + week, averageScore.toFixed(2));
+
+    }
+
+    // Hàm để lưu trạng thái vào Local Storage cho một tuần cụ thể và một ngày cụ thể
+    function saveToLocalStorage(week, day) {
+      var tableDataKey = `tableData${week}_${day}`;
+      var allTableData = localStorage.getItem(tableDataKey);
+
+      var rowData = {
+        score: parseInt(document.getElementById("score" + week + "_" + day).textContent) || 100,
+        absent: parseInt(document.getElementById("absent" + week + "_" + day).value) || 0,
+        late: parseInt(document.getElementById("late" + week + "_" + day).value) || 0,
+        noBadge: parseInt(document.getElementById("noBadge" + week + "_" + day).value) || 0,
+        uniformViolation: parseInt(document.getElementById("uniformViolation" + week + "_" + day).value) || 0,
+        disciplinaryViolation: parseInt(document.getElementById("disciplinaryViolation" + week + "_" + day).value) || 0,
+      };
+
+      localStorage.setItem(tableDataKey, JSON.stringify(rowData));
+    }
+
+    // Hàm để khôi phục dữ liệu từ Local Storage khi trang được tải lại cho mọi bảng
+    function restoreFromLocalStorage(week) {
+      for (var day = 2; day <= 7; day++) {
+        var tableDataKey = `tableData${week}_${day}`;
+        var rowData = localStorage.getItem(tableDataKey);
+
+        if (rowData) {
+          rowData = JSON.parse(rowData);
+          document.getElementById("score" + week + "_" + day).textContent = rowData.score;
+          document.getElementById("absent" + week + "_" + day).value = rowData.absent;
+          document.getElementById("late" + week + "_" + day).value = rowData.late;
+          document.getElementById("noBadge" + week + "_" + day).value = rowData.noBadge;
+          document.getElementById("uniformViolation" + week + "_" + day).value = rowData.uniformViolation;
+          document.getElementById("disciplinaryViolation" + week + "_" + day).value = rowData.disciplinaryViolation;
+        }
+      }
+
+      calculateAverage(week);
+
+    }
+    // Hàm lưu ghi chú vào localStorage của trang web hiện tại
+    function saveNote() {
+      var note = document.getElementById("noteInput").value;
+      if (note.trim() === "") {
+          alert("Vui lòng nhập nội dung ghi chú!");
+          return;
+      }
+      var savedNotes = JSON.parse(localStorage.getItem(window.location.href)) || [];
+      savedNotes.push(note);
+      localStorage.setItem(window.location.href, JSON.stringify(savedNotes));
+      loadNotes();
+  }
+
+  // Hàm load ghi chú từ localStorage của trang web hiện tại
+  function loadNotes() {
+      var savedNotes = JSON.parse(localStorage.getItem(window.location.href)) || [];
+      var notesContainer = document.getElementById("savedNotes");
+      notesContainer.innerHTML = "";
+      savedNotes.forEach(function(note, index) {
+          var noteElement = document.createElement("div");
+          noteElement.textContent = (index + 1) + ". " + note;
+          notesContainer.appendChild(noteElement);
+      });
+  }
+
+  // Load ghi chú khi trang được tải
+  window.onload = loadNotes;
+    
+    // Tạo bảng cho tuần 1
+    createTable(12123);
+
+  </script>
+
+</body>
+</html>
